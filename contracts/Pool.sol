@@ -8,6 +8,7 @@ import "./Interface/ISwap.sol";
 import "./Interface/IPair.sol";
 import "./Interface/ILiquid.sol";
 import "./Interface/IStaking.sol";
+import "./Interface/ISdeploy.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Pool {
@@ -26,28 +27,27 @@ contract Pool {
     address public swapAddress;
     address public stakingAddress;
     // test용
-    uint256 public withdrawArb;
-    uint256 public withdrawAsd;
-    uint256 public totalLpAmount;
-
-    struct lpInfo {
-        address ArbLp;
-        uint256 ArbLpAmount;
-        address UsdtLp;
-        uint256 UsdtLpAmount;
-        address EthLp;
-        uint256 EthLpAmount;
-    }
-
-    mapping(address => lpInfo) whatLp;
+    // uint256 public withdrawArb;
+    // uint256 public withdrawAsd;
+    // uint256 public totalLpAmount;
+    // bool public isPossible;
+    uint256 public firstNum;
+    uint256 public secondNum;
+    address public firstTokenName;
+    uint256 public firstTokenMon;
+    uint256 public firstAmount;
+    uint256 public secondAmount;
+    bool public isPossible;
+    // address public withdrawName;
+    // uint256 public withdrawtokenMonth;
 
     Deploy getData;
 
-    constructor(address _deployaddress) {
+    constructor(address _deployaddress, address _sDeployAddress) {
         poolAddress = address(this);
-        (pairAddress, liquidAddress, swapAddress, stakingAddress) = IDeploy(
-            _deployaddress
-        ).featureAddress();
+        (pairAddress, liquidAddress, swapAddress) = IDeploy(_deployaddress)
+            .featureAddress();
+        (stakingAddress) = ISdeploy(_sDeployAddress).getFeatureAddress();
     }
 
     function swapToken(
@@ -116,14 +116,6 @@ contract Pool {
             _factoryAddress,
             _AsdToken
         );
-        (
-            withdrawArb,
-            withdrawAsd,
-            totalLpAmount,
-            ARBtokenAddress,
-            USDTtokenAddress,
-            ETHtokenAddress
-        ) = ILiquid(liquidAddress).checkTest();
     }
 
     function differLpstaking(
@@ -134,17 +126,8 @@ contract Pool {
         uint256 _month,
         address _VASDtokenAddress
     ) public {
-        string memory tokenName = SelfToken(_differLptoken).name();
-        if (Strings.equal(tokenName, "ARBLP")) {
-            whatLp[_userAccount].ArbLp = _differLptoken;
-            whatLp[_userAccount].ArbLpAmount = _amount;
-        } else if (Strings.equal(tokenName, "USDTLP")) {
-            whatLp[_userAccount].UsdtLp = _differLptoken;
-            whatLp[_userAccount].UsdtLpAmount = _amount;
-        } else if (Strings.equal(tokenName, "ETHLP")) {
-            whatLp[_userAccount].EthLp = _differLptoken;
-            whatLp[_userAccount].EthLpAmount = _amount;
-        }
+        // string memory tokenName = SelfToken(_differLptoken).name();
+
         IStaking(stakingAddress).StakeDifferLp(
             _differLptoken,
             _userAccount,
@@ -155,7 +138,24 @@ contract Pool {
         );
     }
 
-    function differLpWithdraw(address _userAccount) public {}
+    function differLpWithdraw(
+        address _userAccount,
+        address _factoryAddress
+    ) public {
+        IStaking(stakingAddress).withDrawDifferLp(
+            _userAccount,
+            _factoryAddress
+        );
+        (
+            firstNum,
+            secondNum,
+            firstTokenName,
+            firstTokenMon,
+            firstAmount,
+            secondAmount
+        ) = IStaking(stakingAddress).getValue1();
+        (isPossible) = IStaking(stakingAddress).getValue2();
+    }
 }
 
 // function USDTpoolLv(uint256 _level) external {

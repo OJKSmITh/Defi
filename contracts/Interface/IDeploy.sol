@@ -8,5 +8,5 @@ interface IDeploy {
     function featureAddress()
         external
         view
-        returns (address pair, address liquid, address swap, address staking);
+        returns (address pair, address liquid, address swap);
 }

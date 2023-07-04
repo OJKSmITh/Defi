@@ -7,18 +7,17 @@ import "./SelfToken.sol";
 import "./Pair.sol";
 import "./Liquid.sol";
 import "./Swap.sol";
-import "./Staking.sol";
 
 contract Deploy {
     Pair pairParam;
     Liquid liquidParam;
     Swap swapParam;
-    Staking stakingParam;
+
     address private VASDtokenAddress;
     address private pairAddress;
     address private liquidAddress;
     address private swapAddress;
-    address private stakingAddress;
+
     SelfToken deployAsdtoken;
     SelfToken deployVasdtoken;
     SelfToken deployArbtoken;
@@ -34,8 +33,6 @@ contract Deploy {
         liquidAddress = address(liquidParam);
         swapParam = new Swap(_feePercent);
         swapAddress = address(swapParam);
-        stakingParam = new Staking();
-        stakingAddress = address(stakingParam);
     }
 
     function tokenAddress() public view returns (address vasdToken) {
@@ -45,8 +42,8 @@ contract Deploy {
     function featureAddress()
         public
         view
-        returns (address pair, address liquid, address swap, address staking)
+        returns (address pair, address liquid, address swap)
     {
-        return (pairAddress, liquidAddress, swapAddress, stakingAddress);
+        return (pairAddress, liquidAddress, swapAddress);
     }
 }

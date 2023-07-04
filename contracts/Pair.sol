@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import "./SelfToken.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 pragma solidity ^0.8.9;
 
@@ -11,6 +12,13 @@ contract Pair {
     address private ArbLpaddress;
     address private UsdtLpaddress;
     address private EthLpaddress;
+    uint256 private ArbpoolLv = 1;
+    uint256 private UsdtpoolLv = 1;
+    uint256 private EthpoolLv = 1;
+    uint256 private ArbLpLv = 1;
+    uint256 private UsdtLpLv = 1;
+    uint256 private EthLpLv = 1;
+
     struct CheckToken {
         address token1;
         address token2;
@@ -78,5 +86,42 @@ contract Pair {
         returns (address arblp, address usdtlp, address ethlp)
     {
         return (ArbLpaddress, UsdtLpaddress, EthLpaddress);
+    }
+
+    function getLpLv()
+        public
+        view
+        returns (
+            uint256 _ArbpoolLv,
+            uint256 _ArbLpLv,
+            uint256 _UsdtpoolLv,
+            uint256 _UsdtLpLv,
+            uint256 _EthpoolLv,
+            uint256 _EthLpLv
+        )
+    {
+        return (ArbpoolLv, ArbLpLv, UsdtpoolLv, UsdtLpLv, EthpoolLv, EthLpLv);
+    }
+
+    function poolLvManagement(address _lptoken, uint256 _level) public {
+        string memory lpName = SelfToken(_lptoken).name();
+        if (Strings.equal(lpName, "ARBLP")) {
+            ArbpoolLv = _level;
+        } else if (Strings.equal(lpName, "USDTLP")) {
+            UsdtpoolLv = _level;
+        } else if (Strings.equal(lpName, "ETHLP")) {
+            EthpoolLv = _level;
+        }
+    }
+
+    function LptokenLvManagement(address _lptoken, uint256 _level) public {
+        string memory lpName = SelfToken(_lptoken).name();
+        if (Strings.equal(lpName, "ARBLP")) {
+            ArbLpLv = _level;
+        } else if (Strings.equal(lpName, "USDTLP")) {
+            UsdtLpLv = _level;
+        } else if (Strings.equal(lpName, "ETHLP")) {
+            EthLpLv = _level;
+        }
     }
 }

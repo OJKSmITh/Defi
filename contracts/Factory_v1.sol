@@ -5,6 +5,8 @@ pragma solidity ^0.8.9;
 import "./SelfToken.sol";
 import "./Pool.sol";
 import "./Interface/IPair.sol";
+import "./Interface/IDeploy.sol";
+import "./Interface/ISdeploy.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Factory_v1 {
@@ -17,26 +19,43 @@ contract Factory_v1 {
     address public ETHtokenAddress;
     address public ASDtokenAddress; // 여기서는 테스트 용으로 지금 놓지만 나중에는 자동으로 배포해서 받자.
     address public VASDtokenAddress;
-    // pair, liquid, swap, pool
+    // pair, liquid, swap, pool, staking
     address public pairAddress;
     address public liquidAddress;
     address public swapAddress;
     address public poolAddress;
+    address public stakingAddress;
     // lp 주소
     address public ArbLpaddress; // ARBLpaddress
     address public UsdtLpaddress; // ARBLpaddress
     address public EthLpaddress; // ARBLpaddress
+    // lp 관련 레벨들
+    uint256 public ArbpoolLv;
+    uint256 public ArbLpLv;
+    uint256 public UsdtpoolLv;
+    uint256 public UsdtLpLv;
+    uint256 public EthpoolLv;
+    uint256 public EthLpLv;
+    // check value
+    uint256 public backAmount;
+    bool public isPossible;
     Pool pool;
 
-    // Deploy getData;
+    struct LvContent {
+        uint256 poolLv;
+        uint256 LptokenLv;
+    }
 
-    constructor(address _deployAddress) {
+    mapping(address => LvContent) public LvContents;
+
+    constructor(address _deployAddress, address _sDeployAddress) {
         factoryAddress = address(this);
-        pool = new Pool(_deployAddress);
+        pool = new Pool(_deployAddress, _sDeployAddress);
         poolAddress = address(pool);
         (VASDtokenAddress) = IDeploy(_deployAddress).tokenAddress();
         (pairAddress, liquidAddress, swapAddress) = IDeploy(_deployAddress)
             .featureAddress();
+        (stakingAddress) = ISdeploy(_sDeployAddress).getFeatureAddress();
     }
 
     event CalcLendingEvent(uint tokenTotalLp);
@@ -61,6 +80,15 @@ contract Factory_v1 {
         pairAddress = pool.pairAddress();
         (ArbLpaddress, UsdtLpaddress, EthLpaddress) = IPair(pairAddress)
             .getLpAddress();
+        (ArbpoolLv, ArbLpLv, UsdtpoolLv, UsdtLpLv, EthpoolLv, EthLpLv) = IPair(
+            pairAddress
+        ).getLpLv();
+        LvContents[ArbLpaddress].poolLv = ArbpoolLv;
+        LvContents[ArbLpaddress].LptokenLv = ArbLpLv;
+        LvContents[UsdtLpaddress].poolLv = UsdtpoolLv;
+        LvContents[UsdtLpaddress].LptokenLv = UsdtLpLv;
+        LvContents[EthLpaddress].poolLv = EthpoolLv;
+        LvContents[EthLpaddress].LptokenLv = EthLpLv;
     }
 
     function checkLptoken(
@@ -85,6 +113,36 @@ contract Factory_v1 {
             userAccount,
             factoryAddress
         );
+    }
+
+    function poolLvup(address _Lptoken, uint256 _level) public {
+        string memory lpName = SelfToken(_Lptoken).name();
+        if (Strings.equal(lpName, "ARBLP")) {
+            ArbpoolLv = _level;
+            LvContents[ArbLpaddress].poolLv = _level;
+        } else if (Strings.equal(lpName, "USDTLP")) {
+            UsdtpoolLv = _level;
+            LvContents[UsdtLpaddress].poolLv = _level;
+        } else if (Strings.equal(lpName, "ETHLP")) {
+            EthpoolLv = _level;
+            LvContents[EthLpaddress].poolLv = _level;
+        }
+        IPair(pairAddress).poolLvManagement(_Lptoken, _level);
+    }
+
+    function tokenLvManagement(address _Lptoken, uint256 _level) public {
+        string memory lpName = SelfToken(_Lptoken).name();
+        if (Strings.equal(lpName, "ARBLP")) {
+            ArbLpLv = _level;
+            LvContents[ArbLpaddress].LptokenLv = _level;
+        } else if (Strings.equal(lpName, "USDTLP")) {
+            UsdtLpLv = _level;
+            LvContents[UsdtLpaddress].LptokenLv = _level;
+        } else if (Strings.equal(lpName, "ETHLP")) {
+            EthLpLv = _level;
+            LvContents[EthLpaddress].LptokenLv = _level;
+        }
+        IPair(pairAddress).LptokenLvManagement(_Lptoken, _level);
     }
 
     function withDrawLiquid(
@@ -122,6 +180,7 @@ contract Factory_v1 {
 
     function withDrawStaking() public {
         address userAccount = msg.sender;
-        pool.differLpWithdraw(userAccount);
+        pool.differLpWithdraw(userAccount, factoryAddress);
+        backAmount = pool.firstAmount();
     }
 }
