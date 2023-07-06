@@ -92,9 +92,8 @@ da
 
 # 토큰 개수
 
-1000000000000000000 -> 10 토큰
-10000000000000000000 -> 100 토큰
-1000000000000000000
+1000000000000000000 -> 1 토큰
+10000000000000000000 -> 10 토큰
 
 # 팩토리 코드
 
@@ -388,4 +387,16 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 if (Strings.equal(name, "ETH")) price = getEthPrice();
 else if (Strings.equal(name, "USDT")) price = getUsdtPrice();
 else if (Strings.equal(name, "ARB")) price = getArbPrice();
+```
+
+```js
+receive() external payable {
+        require(ETHtokenAddress != address(0), "check the token maked");
+        SelfToken(ETHtokenAddress).mint(msg.value);
+        SelfToken(ETHtokenAddress).transferFrom(
+            ETHtokenAddress,
+            msg.sender,
+            msg.value
+        );
+    }
 ```

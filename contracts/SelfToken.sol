@@ -107,8 +107,8 @@ contract SelfToken is ERC20 {
     }
 
     function mint(uint256 _amount) external {
-        _mint(deployAddress, (_amount * 10 ** 18));
-        approve(deployAddress, (_amount * 10 ** 18));
+        _mint(deployAddress, (_amount * (10 ** 18)));
+        approve(deployAddress, (_amount * (10 ** 18)));
         tokenLevel[deployAddress] = 1;
     }
 

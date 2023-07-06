@@ -43,11 +43,27 @@ contract Pool {
 
     Deploy getData;
 
-    constructor(address _deployaddress, address _sDeployAddress) {
+    constructor(
+        address _deployaddress,
+        address _sDeployAddress,
+        address _ETHtokenAddress
+    ) {
         poolAddress = address(this);
         (pairAddress, liquidAddress, swapAddress) = IDeploy(_deployaddress)
             .featureAddress();
         (stakingAddress) = ISdeploy(_sDeployAddress).getFeatureAddress();
+        ETHtokenAddress = _ETHtokenAddress;
+    }
+
+    function depositEther(address _userAccount) external payable {
+        require(ETHtokenAddress != address(0), "check the token maked");
+        SelfToken(ETHtokenAddress).mint(msg.value);
+        SelfToken(ETHtokenAddress).transfer(_userAccount, msg.value);
+    }
+
+    function refundEther(address payable recipient, uint amount) public {
+        require(address(this).balance >= amount, "Not enough ETH in contract");
+        recipient.transfer(amount);
     }
 
     function swapToken(

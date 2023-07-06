@@ -48,17 +48,35 @@ contract Factory_v1 {
 
     mapping(address => LvContent) public LvContents;
 
-    constructor(address _deployAddress, address _sDeployAddress) {
+    constructor(
+        address _deployAddress,
+        address _sDeployAddress,
+        address _ETHtokenAddress
+    ) {
         factoryAddress = address(this);
-        pool = new Pool(_deployAddress, _sDeployAddress);
+        pool = new Pool(_deployAddress, _sDeployAddress, _ETHtokenAddress);
         poolAddress = address(pool);
         (VASDtokenAddress) = IDeploy(_deployAddress).tokenAddress();
         (pairAddress, liquidAddress, swapAddress) = IDeploy(_deployAddress)
             .featureAddress();
         (stakingAddress) = ISdeploy(_sDeployAddress).getFeatureAddress();
+        ETHtokenAddress = _ETHtokenAddress;
     }
 
     event CalcLendingEvent(uint tokenTotalLp);
+
+    function buyToken() public payable {
+        require(msg.value > 0, "check the ether amount");
+        address userAccount = msg.sender;
+        pool.depositEther{value: msg.value}(userAccount);
+    }
+
+    function refundToken(address _ETHtokenAddress, uint _amount) public {
+        uint256 checkAmount = SelfToken(_ETHtokenAddress).balanceOf(msg.sender);
+        require(checkAmount >= _amount, "check the amount");
+        SelfToken(_ETHtokenAddress)._burn(msg.sender, _amount);
+        pool.refundEther(payable(msg.sender), _amount);
+    }
 
     function swapToken(
         address _diffrentToken,
