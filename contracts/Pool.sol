@@ -37,6 +37,7 @@ contract Pool {
     uint256 public firstTokenMon;
     uint256 public firstAmount;
     uint256 public secondAmount;
+    uint256 public digiCount;
     bool public isPossible;
     // address public withdrawName;
     // uint256 public withdrawtokenMonth;
@@ -57,8 +58,14 @@ contract Pool {
 
     function depositEther(address _userAccount) external payable {
         require(ETHtokenAddress != address(0), "check the token maked");
-        SelfToken(ETHtokenAddress).mint(msg.value);
-        SelfToken(ETHtokenAddress).transfer(_userAccount, msg.value);
+        uint256 digicount = getDigitCount(msg.value);
+        uint256 EthAmount = msg.value / (10 ** digicount);
+        SelfToken(ETHtokenAddress).Ethmint(EthAmount, digicount);
+        SelfToken(ETHtokenAddress).transferFrom(
+            ETHtokenAddress,
+            _userAccount,
+            msg.value
+        );
     }
 
     function refundEther(address payable recipient, uint amount) public {
@@ -171,6 +178,22 @@ contract Pool {
             secondAmount
         ) = IStaking(stakingAddress).getValue1();
         (isPossible) = IStaking(stakingAddress).getValue2();
+    }
+
+    function getDigitCount(uint256 number) public returns (uint256) {
+        if (number == 0) {
+            return 1;
+        }
+
+        uint256 digitCount = 0;
+        digiCount = 0;
+        while (number > 0) {
+            digitCount++;
+            digiCount++;
+            number = number / 10;
+        }
+
+        return digitCount - 1;
     }
 }
 

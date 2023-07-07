@@ -93,7 +93,8 @@ da
 # 토큰 개수
 
 1000000000000000000 -> 1 토큰
-10000000000000000000 -> 10 토큰
+100000000000000000000 -> 10 토큰
+1000000000
 
 # 팩토리 코드
 
@@ -398,5 +399,60 @@ receive() external payable {
             msg.sender,
             msg.value
         );
+    }
+```
+
+```js
+  function AsdSwap(
+        address tokenA,
+        address tokenB,
+        address _userAccount,
+        address _contractAddress,
+        uint256 amountA
+    ) public {
+        uint256 amountB;
+        uint256 feeAmount;
+        uint256 amountToSwap;
+        uint256 swapPercent;
+        if (
+            keccak256(bytes(SelfToken(tokenB).name())) ==
+            keccak256(bytes("ARB"))
+        ) {
+            swapPercent = ArbSwapPercent;
+        } else if (
+            keccak256(bytes(SelfToken(tokenB).name())) ==
+            keccak256(bytes("USDT"))
+        ) {
+            swapPercent = UsdtSwapPercent;
+        } else if (
+            keccak256(bytes(SelfToken(tokenB).name())) ==
+            keccak256(bytes("ETH"))
+        ) {
+            swapPercent = EthSwapPercent;
+        } else {
+            revert("Unsupported token");
+        }
+        (feeAmount, amountToSwap) = calculateFeesAndAmountToSwap(amountA);
+
+        amountB = calculateAmountASD(amountToSwap, swapPercent);
+        conductTransfer(
+            tokenA,
+            tokenB,
+            _userAccount,
+            _contractAddress,
+            amountA,
+            amountB,
+            feeAmount,
+            amountToSwap
+        );
+    }
+```
+
+```js
+function calculateAmountASD(
+        uint256 _amountToSwap,
+        uint256 _swapPercent
+    ) public pure returns (uint256) {
+        return _amountToSwap / _swapPercent;
     }
 ```

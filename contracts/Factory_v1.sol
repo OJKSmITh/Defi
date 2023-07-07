@@ -56,7 +56,7 @@ contract Factory_v1 {
         factoryAddress = address(this);
         pool = new Pool(_deployAddress, _sDeployAddress, _ETHtokenAddress);
         poolAddress = address(pool);
-        (VASDtokenAddress) = IDeploy(_deployAddress).tokenAddress();
+        (VASDtokenAddress) = ISdeploy(_sDeployAddress).tokenAddress();
         (pairAddress, liquidAddress, swapAddress) = IDeploy(_deployAddress)
             .featureAddress();
         (stakingAddress) = ISdeploy(_sDeployAddress).getFeatureAddress();
@@ -72,6 +72,7 @@ contract Factory_v1 {
     }
 
     function refundToken(address _ETHtokenAddress, uint _amount) public {
+        require(_ETHtokenAddress == ETHtokenAddress, "check the right token");
         uint256 checkAmount = SelfToken(_ETHtokenAddress).balanceOf(msg.sender);
         require(checkAmount >= _amount, "check the amount");
         SelfToken(_ETHtokenAddress)._burn(msg.sender, _amount);

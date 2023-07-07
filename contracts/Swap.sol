@@ -9,13 +9,13 @@ contract Swap {
     using SafeMath for uint256;
     address public feeRecipient;
     uint public feePercentage;
-    uint256 private AsdPrice;
     uint256 public EthPrice;
     uint256 public UsdtPrice;
     uint256 public ArbPrice;
     uint256 public EthSwapPercent;
     uint256 public UsdtSwapPercent;
     uint256 public ArbSwapPercent;
+    uint256 public ASDSwapPercent;
     uint256 public testValue;
 
     TokenPriceOracle public priceOracle;
@@ -24,20 +24,19 @@ contract Swap {
     address public UsdtAddress = 0x0a023a3423D9b27A0BE48c768CCF2dD7877fEf5E;
     address public ArbAddress = 0x2eE9BFB2D319B31A573EA15774B755715988E99D;
 
+    mapping(string => uint256) public tokenInfo;
+
     constructor(uint _feePercentage) {
         feeRecipient = address(this);
         feePercentage = _feePercentage;
-        AsdPrice = 100000000;
         priceOracle = new TokenPriceOracle(EthAddress, UsdtAddress, ArbAddress);
         // EthPrice = priceOracle.getEthPrice();
         // UsdtPrice = priceOracle.getUsdtPrice();
         // ArbPrice = priceOracle.getArbPrice();
-        // EthSwapPercent = EthPrice / AsdPrice;
-        // UsdtSwapPercent = UsdtPrice / AsdPrice;
-        // ArbSwapPercent = ArbPrice / AsdPrice;
-        EthSwapPercent = 1878;
-        UsdtSwapPercent = 1;
-        ArbSwapPercent = 1;
+        tokenInfo["ETH"] = 2000000;
+        tokenInfo["ARB"] = 1000;
+        tokenInfo["USDT"] = 1000;
+        tokenInfo["ASD"] = 1000;
     }
 
     function differTokenSwap(
@@ -50,29 +49,14 @@ contract Swap {
         uint256 amountB;
         uint256 feeAmount;
         uint256 amountToSwap;
-        uint256 swapPercent;
-        if (
-            keccak256(bytes(SelfToken(tokenA).name())) ==
-            keccak256(bytes("ARB"))
-        ) {
-            swapPercent = ArbSwapPercent;
-        } else if (
-            keccak256(bytes(SelfToken(tokenA).name())) ==
-            keccak256(bytes("USDT"))
-        ) {
-            swapPercent = UsdtSwapPercent;
-        } else if (
-            keccak256(bytes(SelfToken(tokenA).name())) ==
-            keccak256(bytes("ETH"))
-        ) {
-            swapPercent = EthSwapPercent;
-        } else {
-            revert("Unsupported token");
-        }
+        string memory tokenAName = SelfToken(tokenA).name();
+        string memory tokenBName = SelfToken(tokenB).name();
+        uint256 valueA = tokenInfo[tokenAName];
+        uint256 valueB = tokenInfo[tokenBName];
 
         (feeAmount, amountToSwap) = calculateFeesAndAmountToSwap(amountA);
 
-        amountB = calculateAmountB(amountToSwap, swapPercent);
+        amountB = calculateAmountB(amountToSwap, valueA, valueB);
 
         conductTransfer(
             tokenA,
@@ -89,17 +73,30 @@ contract Swap {
     function calculateFeesAndAmountToSwap(
         uint256 amountA
     ) public view returns (uint256 feeAmount, uint256 amountToSwap) {
-        uint256 _feePercentage = feePercentage * 10 ** 17;
+        uint256 _feePercentage = feePercentage * (10 ** 15);
         feeAmount = (amountA / 10 ** 18) * _feePercentage;
         amountToSwap = amountA - feeAmount;
         return (feeAmount, amountToSwap);
     }
 
     function calculateAmountB(
-        uint256 amountToSwap,
-        uint256 swapPercent
+        uint256 _amountToSwap, // a의 개수
+        uint256 _valueA,
+        uint256 _valueB
     ) public pure returns (uint256) {
-        return amountToSwap * swapPercent;
+        uint256 amountB;
+        uint256 aPer;
+        uint256 bPer;
+        if (_valueA < _valueB) {
+            aPer = _valueB / _valueA;
+            bPer = 1;
+            amountB = (bPer * _amountToSwap) / aPer;
+        } else if (_valueA > _valueB) {
+            aPer = 1;
+            bPer = _valueA / _valueB;
+            amountB = (bPer * _amountToSwap) / aPer;
+        }
+        return amountB;
     }
 
     function conductTransfer(
@@ -117,12 +114,12 @@ contract Swap {
         SelfToken(tokenA).transferFrom(
             _userAccount,
             _contractAddress,
-            feeAmount
+            amountToSwap
         );
         SelfToken(tokenA).transferFrom(
             _userAccount,
             _contractAddress,
-            amountToSwap
+            feeAmount
         );
         SelfToken(tokenB).transferFrom(_contractAddress, _userAccount, amountB);
     }

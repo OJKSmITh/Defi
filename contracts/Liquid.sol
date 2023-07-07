@@ -123,7 +123,7 @@ contract Liquid {
         address _userAccount,
         address _factoryAddress,
         address _ASDAddress
-    ) external payable {
+    ) external {
         require(
             SelfToken(_lpaddress).totalSupply() >= _amount,
             "insufficient lp amount"
@@ -216,11 +216,27 @@ contract Liquid {
             SelfToken(_token1).balanceOf(address(this)) > 0 &&
             SelfToken(_token2).balanceOf(address(this)) > 0
         ) {
-            previousLp = (SelfToken(_token1).balanceOf(address(this)) *
-                SelfToken(_token2).balanceOf(address(this))).sqrt();
+            uint256 count1 = getDigitCount(
+                SelfToken(_token1).balanceOf(address(this))
+            );
+            uint256 count2 = getDigitCount(
+                SelfToken(_token2).balanceOf(address(this))
+            );
+            previousLp = ((SelfToken(_token1).balanceOf(address(this)) /
+                (10 ** count1)) *
+                (SelfToken(_token2).balanceOf(address(this)) / (10 ** count2)))
+                .sqrt();
         }
-        uint totalAmount = (SelfToken(_token1).balanceOf(address(this)) +
-            amount1) * (SelfToken(_token2).balanceOf(address(this)) + amount2);
+        uint256 count3 = getDigitCount(
+            SelfToken(_token1).balanceOf(address(this)) + amount1
+        );
+        uint256 count4 = getDigitCount(
+            SelfToken(_token2).balanceOf(address(this)) + amount2
+        );
+        uint totalAmount = ((SelfToken(_token1).balanceOf(address(this)) +
+            amount1) / (10 ** count3)) *
+            ((SelfToken(_token2).balanceOf(address(this)) + amount2) /
+                (10 ** count4));
         uint totallpAmount = totalAmount.sqrt() - previousLp;
         return totallpAmount;
     }
@@ -287,5 +303,19 @@ contract Liquid {
             USDTtokenAddress,
             ETHtokenAddress
         );
+    }
+
+    function getDigitCount(uint256 number) public pure returns (uint256) {
+        if (number == 0) {
+            return 1;
+        }
+
+        uint256 digitCount = 0;
+        while (number > 0) {
+            digitCount++;
+            number = number / 10;
+        }
+
+        return digitCount;
     }
 }

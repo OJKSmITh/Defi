@@ -27,8 +27,13 @@ const config: HardhatUserConfig = {
       accounts : require("./accounts.json").privateKey,
       gas:20000000,
       gasPrice: 25000000000
+    },
+    ganache: {
+      url: "http://localhost:8545", // Ganache URL
+      chainId: 1337, // Chain ID for Ganache
+      gas: 8000000, // Gas limit for Ganache
+      gasPrice: 20000000000 // Gas price for Ganache
     }
-
   }
 };
 
